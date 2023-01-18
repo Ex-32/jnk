@@ -1,0 +1,16 @@
+
+WHITESPACE = _{ " " | "\t" }
+
+Variable = @{ ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }
+
+Operator = { "+" | "-" | "*" | "/" | "%" | "^"  }
+
+Parenthetical = { "(" ~ Expression ~ ")" }
+
+Literal  = @{ ASCII_DIGIT+ }
+
+Value = { ("-" ~ Value ) | Variable | Literal | Parenthetical }
+
+Expression = { Value ~ (Operator ~ Value)* }
+
+Main = { SOI ~ ( Variable ~ "=" )? ~ Expression ~ EOI }

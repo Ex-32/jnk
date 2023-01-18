@@ -1,0 +1,16 @@
+
+# cargo artifacts
+/target
+/Cargo.lock
+
+# misc system debris
+.DS_Store
+.directory
+.[Tt]rash*
+desktop.ini
+
+# misc editor debris
+.vs
+.vscode
+.cache
+.clangd

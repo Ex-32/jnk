@@ -1,0 +1,22 @@
+[package]
+name = "jnk"
+description = "Jenna's Number Kruncher: a library for parsing math expressions."
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "jnk"
+path = "src/lib/lib.rs"
+
+[[bin]]
+name = "jnk"
+path = "src/bin/main.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4.17"
+pest = "2.5.3"
+pest_derive = "2.5.3"
+rug = "1.19.0"
+thiserror = "1.0.38"

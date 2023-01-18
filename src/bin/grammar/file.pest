@@ -1,0 +1,5 @@
+COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
+
+Main = { SOI ~ Line* ~ EOI }
+
+Line = @{ (!NEWLINE ~ ANY ~ ("\\" ~ NEWLINE)?)+ }
