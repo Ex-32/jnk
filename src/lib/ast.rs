@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::Rule;
+use crate::parser::Rule;
 use rug::Integer;
 
 #[derive(Debug)]
@@ -9,10 +9,9 @@ pub(crate) enum Node {
     Variable(String),
     Lhs(String),
     Operator(Operator),
-    // Parenthetical(Box<Node>),
+    Parenthetical(Box<Node>),
     Literal(Integer),
-    // Value(Box<Node>),
-    // Expression(Vec<Node>),
+    Expression(Vec<Node>),
 }
 
 #[derive(Debug)]
@@ -25,7 +24,6 @@ pub(crate) enum Operator {
 }
 
 pub(crate) fn create_ast(pair: pest::iterators::Pair<Rule>) -> Node {
-    println!("{:#?}", pair);
     match pair.as_rule() {
         Rule::Variable => Node::Variable(pair.as_str().to_owned()),
         Rule::Lhs => Node::Lhs(pair.as_str().to_owned()),
@@ -38,18 +36,11 @@ pub(crate) fn create_ast(pair: pest::iterators::Pair<Rule>) -> Node {
             _ => unreachable!("Not an operator string"),
         }),
         Rule::Parenthetical => {
-            todo!()
+            Node::Parenthetical(Box::new(create_ast(pair.into_inner().next().unwrap())))
         }
-        Rule::Literal => Node::Literal(
-            Integer::from_str(pair.as_str())
-                .expect("Unreachable: ascii digits should always be parsable"),
-        ),
-        Rule::Value => {
-            todo!()
-        }
-        Rule::Expression => {
-            todo!()
-        }
+        Rule::Literal => Node::Literal(Integer::from_str(pair.as_str()).unwrap()),
+        Rule::Value => create_ast(pair.into_inner().next().unwrap()),
+        Rule::Expression => Node::Expression(pair.into_inner().map(create_ast).collect()),
         Rule::Main => {
             let mut pairs = pair.into_inner();
             let val = pairs.next().unwrap();
@@ -63,6 +54,6 @@ pub(crate) fn create_ast(pair: pest::iterators::Pair<Rule>) -> Node {
             }
         }
         Rule::EOI => unreachable!("Non-Silent Silent Rule (EOI)"),
-        Rule::WHITESPACE => unreachable!("Non-Silent Silent Rule"),
+        Rule::WHITESPACE => unreachable!("Non-Silent Silent Rule (WHITESPACE)"),
     }
 }

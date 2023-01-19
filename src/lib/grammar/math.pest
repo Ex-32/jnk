@@ -9,7 +9,7 @@ Operator = { "+" | "-" | "*" | "/" | "^"  }
 
 Parenthetical = { "(" ~ Expression ~ ")" }
 
-Literal  = @{ "-" ~ ASCII_DIGIT+ }
+Literal  = @{ "-"? ~ ASCII_DIGIT+ }
 
 Value = { Variable | Literal | Parenthetical }
 

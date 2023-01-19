@@ -5,16 +5,16 @@ extern crate pest_derive;
 
 mod ast;
 mod error;
+mod parser;
 
 use std::collections::HashMap;
 
-use crate::error::Error;
+use crate::{
+    error::Error,
+    parser::{MathParser, Rule},
+};
 use pest::Parser;
 pub use rug::Integer;
-
-#[derive(Parser)]
-#[grammar = "lib/grammar/math.pest"]
-struct MathParser;
 
 /// A math environment to evaluate expressions.
 ///
@@ -47,7 +47,7 @@ impl MathContext {
         MathContext::default()
     }
 
-    /// Returns the result of the last (non-discarded) expression evaluated
+    /// Returns the result of the last (non-discarded) expression evaluated (initially zero)
     #[inline]
     pub fn last(&self) -> &Integer {
         &self.last
@@ -84,7 +84,7 @@ impl MathContext {
     /// Retrieves a variable from the context, returns `None` if the variable
     /// name doesn't exist in the context (this includes invalid names).
     #[inline]
-    pub fn var_get<'a>(&'a self, name: &str) -> Option<&'a Integer> {
+    pub fn var_get(&self, name: &str) -> Option<&Integer> {
         self.var_tab.get(name)
     }
 
@@ -114,7 +114,6 @@ impl MathContext {
         };
 
         let _ast = ast::create_ast(pairs.next().unwrap());
-
         todo!()
     }
 }
