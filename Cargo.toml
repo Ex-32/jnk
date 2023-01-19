@@ -1,7 +1,10 @@
 [package]
+publish = false
 name = "jnk"
-description = "Jenna's Number Kruncher: a library for parsing math expressions."
 version = "0.1.0"
+description = "Jenna's Number Kruncher: a library for parsing math expressions."
+authors = ["Jenna Fligor <jenna@fligor.net>"]
+license = "MIT"
 edition = "2021"
 
 [lib]

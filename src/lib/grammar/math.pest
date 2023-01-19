@@ -1,16 +1,18 @@
 
 WHITESPACE = _{ " " | "\t" }
 
-Variable = @{ ASCII_ALPHA ~ ASCII_ALPHANUMERIC* }
+Variable = @{ ASCII_ALPHA ~ ( "_" | ASCII_ALPHANUMERIC )* }
 
-Operator = { "+" | "-" | "*" | "/" | "%" | "^"  }
+Lhs = { Variable }
+
+Operator = { "+" | "-" | "*" | "/" | "^"  }
 
 Parenthetical = { "(" ~ Expression ~ ")" }
 
-Literal  = @{ ASCII_DIGIT+ }
+Literal  = @{ "-" ~ ASCII_DIGIT+ }
 
-Value = { ("-" ~ Value ) | Variable | Literal | Parenthetical }
+Value = { Variable | Literal | Parenthetical }
 
 Expression = { Value ~ (Operator ~ Value)* }
 
-Main = { SOI ~ ( Variable ~ "=" )? ~ Expression ~ EOI }
+Main = { SOI ~ ( Lhs ~ "=" )? ~ Expression ~ EOI }

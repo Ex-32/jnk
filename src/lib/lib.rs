@@ -1,17 +1,20 @@
 /// A library for parsing math expressions with stateful variables
-
-
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
-mod parser;
+mod ast;
 mod error;
 
 use std::collections::HashMap;
 
-pub use error::Error;
+use crate::error::Error;
+use pest::Parser;
 pub use rug::Integer;
+
+#[derive(Parser)]
+#[grammar = "lib/grammar/math.pest"]
+struct MathParser;
 
 /// A math environment to evaluate expressions.
 ///
@@ -19,12 +22,16 @@ pub use rug::Integer;
 /// `var_set()`, and evaluate expressions with `eval()`
 ///
 /// # Examples
-///
 /// ```
-/// use jnk;
-/// let context = jnk::MathContext::new();
-/// context.add_var("myVar", 42);
-/// assert_eq!(context.get_var("myVar"), 42);
+/// let mut context = jnk::MathContext::new();
+/// context.var_set(
+///     String::from("myVar"),
+///     jnk::Integer::from(42)
+/// ).unwrap();
+/// assert_eq!(
+///     *context.var_get("myVar").unwrap(),
+///     jnk::Integer::from(42)
+/// );
 /// ```
 ///
 #[derive(Debug, Clone, Default)]
@@ -36,30 +43,39 @@ pub struct MathContext {
 impl MathContext {
     /// Creates a new math context, with a blank variable table
     #[inline]
-    pub fn new() -> Self { MathContext::default() }
+    pub fn new() -> Self {
+        MathContext::default()
+    }
 
     /// Returns the result of the last (non-discarded) expression evaluated
     #[inline]
-    pub fn last(&self) -> &Integer { &self.last }
+    pub fn last(&self) -> &Integer {
+        &self.last
+    }
 
     /// Adds a variable to the context so that it can be used in expressions,
     /// if the variable already exists its value is overwritten. Returns a
     /// `NotValidVar` error if the variable name is invalid; variable names must
     /// be ascii alphanumeric, and begin with a letter.
     pub fn var_set(&mut self, name: String, value: Integer) -> Result<(), Error> {
-        if name.starts_with(|x: char| x.is_ascii_alphabetic()) &&
-           name.chars().all(|x: char| x.is_ascii_alphanumeric()) {
+        if name.starts_with(|x: char| x.is_ascii_alphabetic())
+            && name.chars().all(|x: char| x.is_ascii_alphanumeric())
+        {
             self.var_tab.insert(name, value);
-            return Ok(());
+            Ok(())
         } else {
-            return Err(Error::NotValidVar(name));
+            Err(Error::NotValidVar(name))
         }
     }
 
     /// Adds a variable to the context so that it can be used in expressions,
     /// if the variable already exists its value is overwritten. Does not check
-    /// if name is variable name is valid, **the caller must ensure that the
-    /// variable name is ascii alphanumeric, and begins with a letter**.
+    /// if name is variable name is valid!
+    ///
+    /// # Safety
+    /// the caller must ensure that the variable name is ascii alphanumeric, and
+    /// begins with a letter
+    ///
     #[inline]
     pub unsafe fn var_set_unchecked(&mut self, name: String, value: Integer) {
         self.var_tab.insert(name, value);
@@ -75,17 +91,29 @@ impl MathContext {
     /// Evaluate a math expression, this will update the last result value,
     /// as well as store the result into the left hand variable (if it exists)
     pub fn eval(&mut self, expr: &str) -> Result<Integer, Error> {
-        todo!()
+        let res = self.eval_internal(expr)?;
+        if let Some(lhs) = res.lhs {
+            self.var_set(lhs, res.value.clone())?;
+        }
+        self.last = res.value.clone();
+        Ok(res.value)
     }
 
     /// Evaluate a math expression, and disregard the result, this will **not**
     /// update the last result value, and the left hand variable will be
     /// disregarded (if it exists)
     pub fn eval_disregard(&self, expr: &str) -> Result<Integer, Error> {
-        todo!()
+        let res = self.eval_internal(expr)?;
+        Ok(res.value)
     }
 
-    fn parse_expr(&self, expr: &str) -> Result<ExprResult, Error> {
+    fn eval_internal(&self, expr: &str) -> Result<ExprResult, Error> {
+        let mut pairs = match MathParser::parse(Rule::Main, expr) {
+            Ok(x) => x,
+            Err(_) => return Err(Error::ParseInvalidString(expr.to_owned())),
+        };
+
+        let _ast = ast::create_ast(pairs.next().unwrap());
 
         todo!()
     }
@@ -97,13 +125,14 @@ struct ExprResult {
     lhs: Option<String>,
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     #[test]
-//     fn it_works() {
-//         let result = add(2, 2);
-//         assert_eq!(result, 4);
-//     }
-// }
+    #[test]
+    #[should_panic]
+    fn deny_bad_name() {
+        let mut ctx = MathContext::new();
+        ctx.var_set("%!@*&$".to_owned(), Integer::from(42)).unwrap();
+    }
+}
