@@ -1,9 +1,9 @@
 use std::str::FromStr;
 
-use crate::parser::Rule;
+use crate::{parser::Rule, error::Error};
 use rug::Integer;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Node {
     Main(Option<Box<Node>>, Box<Node>),
     Variable(String),
@@ -14,7 +14,7 @@ pub(crate) enum Node {
     Expression(Vec<Node>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Operator {
     Addition,
     Subtraction,

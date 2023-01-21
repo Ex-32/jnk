@@ -13,6 +13,7 @@ use crate::{
     error::Error,
     parser::{MathParser, Rule},
 };
+use ast::{Node, Operator};
 use pest::Parser;
 pub use rug::Integer;
 
@@ -113,8 +114,55 @@ impl MathContext {
             Err(_) => return Err(Error::ParseInvalidString(expr.to_owned())),
         };
 
-        let _ast = ast::create_ast(pairs.next().unwrap());
+        let mut ast = ast::create_ast(pairs.next().unwrap());
+
+        println!("{:#?}", ast);
+
+        let val = self.eval_ast(&ast);
+
         todo!()
+    }
+
+    fn eval_ast(&self, ast: &Node) -> Result<Integer, Error> {
+        match ast {
+            Node::Main(_, expr) => self.eval_ast(expr),
+            Node::Variable(_) => todo!(),
+            Node::Lhs(_) => todo!(),
+            Node::Operator(_) => todo!(),
+            Node::Parenthetical(_) => todo!(),
+            Node::Literal(_) => todo!(),
+            Node::Expression(line) => {
+                // let mut line = line.clone();
+                // Parenthesizes
+                for node in line {
+                    if let Node::Parenthetical(inner) = node {
+                        return self.eval_ast(&inner);
+                    }
+                }
+
+                // Exponenets
+                for (i, node) in line.iter().enumerate()  {
+                    if let Node::Operator(x) = node {
+                        if let Operator::Exponent = x {
+                            let lhs = self.eval_ast(&line[i-1])?;
+                            let mut rhs = self.eval_ast(&line[i+1])?;
+                            let mut a = lhs.clone();
+
+                            // line.remove(i-1);
+                            // line.remove(i+1);
+
+                            while rhs.clone() > 1 {
+                                a = Integer::from(&a * &lhs);
+                                rhs = rhs.clone() - 1;
+                            }
+                        }
+                    }
+                }
+
+
+                unreachable!()
+            },
+        }
     }
 }
 
