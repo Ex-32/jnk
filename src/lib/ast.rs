@@ -1,7 +1,6 @@
-use std::str::FromStr;
-
-use crate::{parser::Rule, error::Error};
+use crate::parser::Rule;
 use rug::Integer;
+use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub(crate) enum Node {
@@ -14,7 +13,7 @@ pub(crate) enum Node {
     Expression(Vec<Node>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) enum Operator {
     Addition,
     Subtraction,

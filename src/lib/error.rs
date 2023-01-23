@@ -1,3 +1,5 @@
+use rug::Integer;
+
 #[derive(thiserror::Error, Debug, Clone)]
 #[non_exhaustive]
 pub enum Error {
@@ -9,4 +11,10 @@ pub enum Error {
 
     #[error("Parser error, invalid string: '{0}'")]
     ParseInvalidString(String),
+
+    #[error("can't raise base to '{0}' power, max 2^32-1")]
+    ExponentOverflow(Integer),
+
+    #[error("Internal failure evaluating AST, please report this")]
+    InternalAstFailure,
 }

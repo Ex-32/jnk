@@ -15,6 +15,7 @@ use crate::{
 };
 use ast::{Node, Operator};
 use pest::Parser;
+use rug::ops::Pow;
 pub use rug::Integer;
 
 /// A math environment to evaluate expressions.
@@ -114,54 +115,114 @@ impl MathContext {
             Err(_) => return Err(Error::ParseInvalidString(expr.to_owned())),
         };
 
-        let mut ast = ast::create_ast(pairs.next().unwrap());
+        let ast = ast::create_ast(pairs.next().unwrap());
 
-        println!("{:#?}", ast);
-
-        let val = self.eval_ast(&ast);
-
-        todo!()
+        if let Node::Main(lhs, mut expr) = ast {
+            let lhs = lhs.map(|x| match *x {
+                Node::Lhs(x) => x,
+                _ => unreachable!(),
+            });
+            let value = self.eval_ast(&mut expr)?;
+            println!("{:#?}", value);
+            Ok(ExprResult { lhs, value })
+        } else {
+            Err(Error::InternalAstFailure)
+        }
     }
 
-    fn eval_ast(&self, ast: &Node) -> Result<Integer, Error> {
+    fn eval_ast(&self, ast: &mut Node) -> Result<Integer, Error> {
+        println!("--> {:#?}", ast);
         match ast {
             Node::Main(_, expr) => self.eval_ast(expr),
-            Node::Variable(_) => todo!(),
-            Node::Lhs(_) => todo!(),
-            Node::Operator(_) => todo!(),
-            Node::Parenthetical(_) => todo!(),
-            Node::Literal(_) => todo!(),
+            Node::Variable(var) => match self.var_get(var) {
+                Some(x) => Ok(x.clone()),
+                None => Err(Error::VarNotFound(var.clone())),
+            },
+            Node::Lhs(_) => Err(Error::InternalAstFailure),
+            Node::Operator(_) => Err(Error::InternalAstFailure),
+            Node::Parenthetical(inner) => self.eval_ast(inner),
+            Node::Literal(x) => Ok(x.clone()),
             Node::Expression(line) => {
-                // let mut line = line.clone();
                 // Parenthesizes
-                for node in line {
+                for node in &mut *line {
                     if let Node::Parenthetical(inner) = node {
-                        return self.eval_ast(&inner);
+                        return self.eval_ast(inner);
                     }
                 }
 
-                // Exponenets
-                for (i, node) in line.iter().enumerate()  {
-                    if let Node::Operator(x) = node {
-                        if let Operator::Exponent = x {
-                            let lhs = self.eval_ast(&line[i-1])?;
-                            let mut rhs = self.eval_ast(&line[i+1])?;
-                            let mut a = lhs.clone();
-
-                            // line.remove(i-1);
-                            // line.remove(i+1);
-
-                            while rhs.clone() > 1 {
-                                a = Integer::from(&a * &lhs);
-                                rhs = rhs.clone() - 1;
+                // Exponents
+                for i in 0..line.len() {
+                    if let Node::Operator(Operator::Exponent) = line[i] {
+                        let lhs = self.eval_ast(&mut line[i - 1])?;
+                        let rhs = self.eval_ast(&mut line[i + 1])?;
+                        let val: Integer;
+                        if rhs.clone() < 0 {
+                            match rhs.as_neg().to_u32() {
+                                Some(x) => val = lhs.pow(x),
+                                None => return Err(Error::ExponentOverflow(rhs)),
                             }
+                        } else {
+                            match rhs.to_u32() {
+                                Some(x) => val = lhs.pow(x),
+                                None => return Err(Error::ExponentOverflow(rhs)),
+                            }
+                        }
+                        line[i] = Node::Literal(val);
+                        line.remove(i - 1);
+                        line.remove(i);
+
+                    }
+                }
+
+                // Multiplication & Division
+                for i in 0..line.len() {
+                    if let Node::Operator(op) = line[i] {
+                        if let Operator::Multiplication = op {
+                            let lhs = self.eval_ast(&mut line[i - 1])?;
+                            let rhs = self.eval_ast(&mut line[i + 1])?;
+                            line[i] = Node::Literal(lhs * rhs);
+                            line.remove(i - 1);
+                            line.remove(i);
+                        } else if let Operator::Division = op {
+                            let lhs = self.eval_ast(&mut line[i - 1])?;
+                            let rhs = self.eval_ast(&mut line[i + 1])?;
+                            line[i] = Node::Literal(lhs / rhs);
+                            line.remove(i - 1);
+                            line.remove(i);
+
                         }
                     }
                 }
 
+                // Addition & Subtraction
+                for i in 0..line.len() {
+                    if let Node::Operator(op) = line[i] {
+                        if let Operator::Addition = op {
+                            let lhs = self.eval_ast(&mut line[i - 1])?;
+                            let rhs = self.eval_ast(&mut line[i + 1])?;
+                            line[i] = Node::Literal(lhs + rhs);
+                            line.remove(i - 1);
+                            line.remove(i);
 
-                unreachable!()
-            },
+                        } else if let Operator::Subtraction = op {
+                            let lhs = self.eval_ast(&mut line[i - 1])?;
+                            let rhs = self.eval_ast(&mut line[i + 1])?;
+                            line[i] = Node::Literal(lhs - rhs);
+                            line.remove(i - 1);
+                            line.remove(i);
+
+                        }
+                    }
+                }
+
+                debug_assert!(line.len() == 1);
+
+                if let Node::Literal(x) = &line[0] {
+                    Ok(x.clone())
+                } else {
+                    Err(Error::InternalAstFailure)
+                }
+            }
         }
     }
 }
