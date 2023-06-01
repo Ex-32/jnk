@@ -16,7 +16,9 @@ use rug::ops::Pow;
 ///
 /// # Examples
 /// ```
-/// let mut context = jnk::MathContext::new();
+/// use jnk::context::MathContext;
+///
+/// let mut context = MathContext::new();
 /// context.var_set("myVar".to_string(), 42.into()).unwrap();
 ///
 /// assert_eq!(
@@ -139,6 +141,10 @@ impl MathContext {
             Node::Literal(x) => Ok(x.clone()),
             Node::Expression(line) => {
                 // Parenthesizes
+                // clippy is telling me to just use a standard iterator loop,
+                // but then i can't reassign the value back into `line` (at
+                // least not any way i found) so i just suppresed the warning
+                #[allow(clippy::needless_range_loop)]
                 for i in 0..line.len() {
                     if let Some(Node::Parenthetical(_)) = line[i] {
                         let mut node = std::mem::replace(&mut line[i], None)
@@ -150,17 +156,13 @@ impl MathContext {
                 // Exponents
                 for i in 0..line.len() {
                     if let Some(Node::Operator(Operator::Exponent)) = line[i] {
-                        let lhs_i = node_left(&line, i)?;
-                        let lhs =
-                            self.eval_ast(&mut line[lhs_i].as_mut().unwrap())?;
-                        let rhs_i = node_right(&line, i)?;
-                        let rhs =
-                            self.eval_ast(&mut line[rhs_i].as_mut().unwrap())?;
+                        let lhs = self.eval_ast(&mut node_left(line, i)?)?;
+                        let rhs = self.eval_ast(&mut node_right(line, i)?)?;
 
                         let val: Integer;
                         if rhs < 0 {
                             match rhs.as_neg().to_u32() {
-                                Some(x) => val = lhs.pow(x),
+                                Some(x) => val = 1 / lhs.pow(x),
                                 None => return Err(Error::ExponentOverflow(rhs)),
                             }
                         } else {
@@ -170,8 +172,6 @@ impl MathContext {
                             }
                         }
                         line[i] = Some(Node::Literal(val));
-                        line[lhs_i] = None;
-                        line[rhs_i] = None; 
                     }
                 }
 
@@ -179,25 +179,13 @@ impl MathContext {
                 for i in 0..line.len() {
                     if let Some(Node::Operator(op)) = line[i] {
                         if let Operator::Multiplication = op {
-                            let lhs_i = node_left(&line, i)?;
-                            let lhs =
-                                self.eval_ast(&mut line[lhs_i].as_mut().unwrap())?;
-                            let rhs_i = node_right(&line, i)?;
-                            let rhs =
-                                self.eval_ast(&mut line[rhs_i].as_mut().unwrap())?;
+                            let lhs = self.eval_ast(&mut node_left(line, i)?)?;
+                            let rhs = self.eval_ast(&mut node_right(line, i)?)?;
                             line[i] = Some(Node::Literal(lhs * rhs));
-                        line[lhs_i] = None;
-                        line[rhs_i] = None; 
                         } else if let Operator::Division = op {
-                            let lhs_i = node_left(&line, i)?;
-                            let lhs =
-                                self.eval_ast(&mut line[lhs_i].as_mut().unwrap())?;
-                            let rhs_i = node_right(&line, i)?;
-                            let rhs =
-                                self.eval_ast(&mut line[rhs_i].as_mut().unwrap())?;
+                            let lhs = self.eval_ast(&mut node_left(line, i)?)?;
+                            let rhs = self.eval_ast(&mut node_right(line, i)?)?;
                             line[i] = Some(Node::Literal(lhs / rhs));
-                        line[lhs_i] = None;
-                        line[rhs_i] = None; 
                         }
                     }
                 }
@@ -206,31 +194,19 @@ impl MathContext {
                 for i in 0..line.len() {
                     if let Some(Node::Operator(op)) = line[i] {
                         if let Operator::Addition = op {
-                            let lhs_i = node_left(&line, i)?;
-                            let lhs =
-                                self.eval_ast(&mut line[lhs_i].as_mut().unwrap())?;
-                            let rhs_i = node_right(&line, i)?;
-                            let rhs =
-                                self.eval_ast(&mut line[rhs_i].as_mut().unwrap())?;
+                            let lhs = self.eval_ast(&mut node_left(line, i)?)?;
+                            let rhs = self.eval_ast(&mut node_right(line, i)?)?;
                             line[i] = Some(Node::Literal(lhs + rhs));
-                        line[lhs_i] = None;
-                        line[rhs_i] = None; 
                         } else if let Operator::Subtraction = op {
-                            let lhs_i = node_left(&line, i)?;
-                            let lhs =
-                                self.eval_ast(&mut line[lhs_i].as_mut().unwrap())?;
-                            let rhs_i = node_right(&line, i)?;
-                            let rhs =
-                                self.eval_ast(&mut line[rhs_i].as_mut().unwrap())?;
+                            let lhs = self.eval_ast(&mut node_left(line, i)?)?;
+                            let rhs = self.eval_ast(&mut node_right(line, i)?)?;
                             line[i] = Some(Node::Literal(lhs - rhs));
-                        line[lhs_i] = None;
-                        line[rhs_i] = None; 
                         }
                     }
                 }
 
                 let result = line
-                    .into_iter()
+                    .iter_mut()
                     .filter_map(|x| x.as_ref())
                     .collect::<Vec<_>>();
 
@@ -239,7 +215,7 @@ impl MathContext {
                         Ok(x.clone())
                     } else {
                         Err(Error::InternalAstFailure)
-                    } 
+                    }
                 } else {
                     Err(Error::InternalAstFailure)
                 }
@@ -254,26 +230,28 @@ struct ExprResult {
     lhs: Option<String>,
 }
 
-fn node_left<T>(line: &Vec<Option<T>>, mut i: usize) -> Result<usize, Error> {
+fn node_left<T>(line: &mut [Option<T>], mut i: usize) -> Result<T, Error> {
     Ok(loop {
         if i == 0 {
             return Err(Error::InternalAstFailure);
         }
         i -= 1;
-        if let Some(_) = line[i] {
-            break i;
+        if line[i].is_some() {
+            let x = std::mem::replace(&mut line[i], None);
+            break x.ok_or(Error::InternalAstFailure)?;
         }
     })
 }
 
-fn node_right<T>(line: &Vec<Option<T>>, mut i: usize) -> Result<usize, Error> {
+fn node_right<T>(line: &mut [Option<T>], mut i: usize) -> Result<T, Error> {
     Ok(loop {
         if i == line.len() {
             return Err(Error::InternalAstFailure);
         }
         i += 1;
-        if let Some(_) = line[i] {
-            break i;
+        if line[i].is_some() {
+            let x = std::mem::replace(&mut line[i], None);
+            break x.ok_or(Error::InternalAstFailure)?;
         }
     })
 }
