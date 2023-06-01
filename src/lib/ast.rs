@@ -10,7 +10,7 @@ pub(crate) enum Node {
     Operator(Operator),
     Parenthetical(Box<Node>),
     Literal(Integer),
-    Expression(Vec<Node>),
+    Expression(Vec<Option<Node>>),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -39,7 +39,9 @@ pub(crate) fn create_ast(pair: pest::iterators::Pair<Rule>) -> Node {
         }
         Rule::Literal => Node::Literal(Integer::from_str(pair.as_str()).unwrap()),
         Rule::Value => create_ast(pair.into_inner().next().unwrap()),
-        Rule::Expression => Node::Expression(pair.into_inner().map(create_ast).collect()),
+        Rule::Expression => {
+            Node::Expression(pair.into_inner().map(|x| Some(create_ast(x))).collect())
+        }
         Rule::Main => {
             let mut pairs = pair.into_inner();
             let val = pairs.next().unwrap();
