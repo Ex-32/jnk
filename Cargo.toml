@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Jenna's Number Kruncher: a library for parsing math expressions."
 authors = ["Jenna Fligor"]
 license = "MIT"
+repository = "https://github.com/Ex-32/jnk/"
 edition = "2021"
 
 [lib]
