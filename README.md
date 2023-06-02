@@ -12,8 +12,16 @@ Jenna's Number Kruncher, a library and cli tool for evaluating math expressions 
 
 ## installation
 
+binary
+
 ```bash
 cargo install jnk
+```
+
+library
+
+```bash
+cargo add jnk
 ```
 
 ## feaures
