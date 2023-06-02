@@ -1,4 +1,3 @@
-
 use jnk::context::MathContext;
 use jnk::Integer;
 

@@ -147,8 +147,7 @@ impl MathContext {
                 #[allow(clippy::needless_range_loop)]
                 for i in 0..line.len() {
                     if let Some(Node::Parenthetical(_)) = line[i] {
-                        let mut node = std::mem::replace(&mut line[i], None)
-                            .ok_or(Error::InternalAstFailure)?;
+                        let mut node = line[i].take().ok_or(Error::InternalAstFailure)?;
                         line[i] = Some(Node::Literal(self.eval_ast(&mut node)?));
                     }
                 }
@@ -237,8 +236,7 @@ fn node_left<T>(line: &mut [Option<T>], mut i: usize) -> Result<T, Error> {
         }
         i -= 1;
         if line[i].is_some() {
-            let x = std::mem::replace(&mut line[i], None);
-            break x.ok_or(Error::InternalAstFailure)?;
+            break line[i].take().ok_or(Error::InternalAstFailure)?;
         }
     })
 }
@@ -250,8 +248,7 @@ fn node_right<T>(line: &mut [Option<T>], mut i: usize) -> Result<T, Error> {
         }
         i += 1;
         if line[i].is_some() {
-            let x = std::mem::replace(&mut line[i], None);
-            break x.ok_or(Error::InternalAstFailure)?;
+            break line[i].take().ok_or(Error::InternalAstFailure)?;
         }
     })
 }

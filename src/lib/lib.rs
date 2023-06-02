@@ -9,4 +9,3 @@ pub mod error;
 mod parser;
 
 pub use rug::Integer;
-
