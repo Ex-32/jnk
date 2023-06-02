@@ -24,8 +24,8 @@ cargo install jnk
 
 ## todo
 
-[ ] cleaner API for the library
-[ ] add script support to cli tool
-[ ] floating point support (maybe)
-[ ] better documentation :P
+- [ ] cleaner API for the library
+- [ ] add script support to cli tool
+- [ ] floating point support (maybe)
+- [ ] better documentation :P
 
