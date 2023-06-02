@@ -60,25 +60,11 @@ impl MathContext {
     /// must be ascii alphanumeric, and begin with a letter.
     pub fn var_set(&mut self, name: String, value: Integer) -> Result<(), Error> {
         if Self::var_valid(&name) {
-            unsafe { self.var_set_unchecked(name, value) }
+            self.var_tab.insert(name, value);
             Ok(())
         } else {
             Err(Error::NotValidVar(name))
         }
-    }
-
-    /// Adds a variable to the context so that it can be used in expressions,
-    /// if the variable already exists its value is overwritten. Does not check
-    /// if name is variable name is valid!
-    ///
-    /// # Safety
-    /// the caller must ensure that the variable name is ascii alphanumeric, and
-    /// begins with a letter (this can be checked with
-    /// [`MathContext::var_valid()`]).
-    ///
-    #[inline]
-    pub unsafe fn var_set_unchecked(&mut self, name: String, value: Integer) {
-        self.var_tab.insert(name, value);
     }
 
     /// Retrieves a variable from the context, returns `None` if the variable
@@ -121,7 +107,6 @@ impl MathContext {
                 _ => unreachable!(),
             });
             let value = self.eval_ast(&mut expr)?;
-            println!("{:#?}", value);
             Ok(ExprResult { lhs, value })
         } else {
             Err(Error::InternalAstFailure)
@@ -201,6 +186,18 @@ impl MathContext {
                             let rhs = self.eval_ast(&mut node_right(line, i)?)?;
                             line[i] = Some(Node::Literal(lhs - rhs));
                         }
+                    }
+                }
+
+                // as mentioned above i couldn't get a normal iterator loop to
+                // work properly with the borrow checker, so i'm just telling
+                // clippy to stfu
+                #[allow(clippy::needless_range_loop)]
+                for i in 0..line.len() {
+                    if let Some(Node::Variable(x)) = &line[i] {
+                        line[i] = Some(Node::Literal(
+                            self.eval_ast(&mut Node::Variable(x.to_owned()))?,
+                        ));
                     }
                 }
 
