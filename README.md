@@ -1,10 +1,24 @@
-# jnk
+<div style="text-align:center">
+  <a href="https://choosealicense.com/licenses/mit/">
+    <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="MIT License"/>
+  </a>
+  <a href="https://shields.io/">
+    <img src="https://img.shields.io/badge/Prounounced-%22Jank%22-informational?style=for-the-badge" alt="Prounounced: Jank"/>
+  </a>
+  <hr/>
+  <a href="https://crates.io/crates/jnk">
+    <img src="https://img.shields.io/crates/v/jnk.svg?style=for-the-badge" alt="Crates status"/>
+  </a>
+  <a href="https://docs.rs/jnk/latest/jnk/">
+    <img src="https://img.shields.io/docsrs/jnk/latest?style=for-the-badge" alt="Docs status"/>
+  </a>
+  <a href="https://deps.rs/repo/github/Ex-32/jnk">
+    <img src="https://deps.rs/repo/github/Ex-32/jnk/status.svg?style=for-the-badge" alt="Dependency status"/>
+  </a>
+</div>
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![Crate Status](https://img.shields.io/crates/v/jnk.svg)](https://crates.io/crates/jnk)
-[![dependency status](https://deps.rs/repo/github/Ex-32/jnk/status.svg)](https://deps.rs/repo/github/Ex-32/jnk)
+# jnk
 [![Build Status](https://github.com/Ex-32/jnk/workflows/CI/badge.svg)](https://github.com/Ex-32/jnk/actions?workflow=CI)
-[![Prounounced: Jank](https://img.shields.io/badge/Prounounced-%22Jank%22-informational)](https://shields.io/)
 
 **this project is still a work in progress and may contain significant bugs, if you notice any, please report them :)**
 
@@ -36,4 +50,3 @@ cargo add jnk
 - [ ] add script support to cli tool
 - [ ] floating point support (maybe)
 - [ ] better documentation :P
-
