@@ -1,5 +1,5 @@
 use crate::parser::Rule;
-use rug::Integer;
+use crate::Integer;
 use std::str::FromStr;
 
 #[derive(Debug, Clone)]
@@ -9,6 +9,7 @@ pub(crate) enum Node {
     Lhs(String),
     Operator(Operator),
     Parenthetical(Box<Node>),
+    Negation(Box<Node>),
     Literal(Integer),
     Expression(Vec<Option<Node>>),
 }
@@ -37,6 +38,7 @@ pub(crate) fn create_ast(pair: pest::iterators::Pair<Rule>) -> Node {
         Rule::Parenthetical => {
             Node::Parenthetical(Box::new(create_ast(pair.into_inner().next().unwrap())))
         }
+        Rule::Negation => Node::Negation(Box::new(create_ast(pair.into_inner().next().unwrap()))),
         Rule::Literal => Node::Literal(Integer::from_str(pair.as_str()).unwrap()),
         Rule::Value => create_ast(pair.into_inner().next().unwrap()),
         Rule::Expression => {

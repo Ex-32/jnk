@@ -2,49 +2,53 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
-use color_eyre::eyre::{Result, WrapErr};
+use std::path::PathBuf;
+
+use clap::Parser;
+use color_eyre::eyre::Result;
+use once_cell::sync::Lazy;
+use owo_colors::{OwoColorize, Stream::Stdout};
 
 mod parser;
 mod repl;
+mod scripts;
 
 const CRATE: &str = env!("CARGO_CRATE_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const AUTHROS: &str = env!("CARGO_PKG_AUTHORS");
 
+static ARGS: Lazy<Args> = Lazy::new(|| Args::parse());
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+   
+    /// disable prompt prompt characters
+    #[arg(short, long)]  
+    quiet: bool,
+
+    /// path to script to evaluate (`-' for stdin)
+    file: Option<PathBuf>,
+}
+
 fn main() -> Result<()> {
     color_eyre::install()?;
-    match std::env::var_os("JNK_DEBUG") {
-        Some(_) => fern::Dispatch::new()
-            .format(|out, msg, record| {
-                out.finish(format_args!(
-                    "[{} {} {}] {}",
-                    humantime::format_rfc3339_seconds(std::time::SystemTime::now()),
-                    record.level(),
-                    record.target(),
-                    msg,
-                ))
-            })
-            .level(log::LevelFilter::Debug),
-        None => fern::Dispatch::new()
-            .format(|out, msg, record| {
-                out.finish(format_args!(
-                    "[{} {}] {}",
-                    humantime::format_rfc3339_seconds(std::time::SystemTime::now()),
-                    record.level(),
-                    msg,
-                ))
-            })
-            .level(log::LevelFilter::Warn),
-    }
-    .chain(std::io::stderr())
-    .apply()
-    .wrap_err("unable to initalize logger")?;
 
-    println!(
-        "{} REPL v{} (c) 2023 {}\n(press ctrl-D to exit)",
-        CRATE, VERSION, AUTHROS
-    );
-    repl::run(&mut jnk::context::MathContext::new())?;
+    if let Some(path) = &ARGS.file {
+        scripts::MathScript::from_file(path)?.eval()?;
+    } else {
+        if !ARGS.quiet {
+            println!(
+                "{} REPL {}{} (c) 2023 {}\n{}",
+                CRATE.bold(),
+                "v".bold(),
+                VERSION.bold(),
+                AUTHROS,
+                "(press ctrl-d to exit)".if_supports_color(Stdout, |x| x.dimmed()),
+            );
+        }
+        repl::run(&mut jnk::context::MathContext::new())?;
+    }
 
     Ok(())
 }

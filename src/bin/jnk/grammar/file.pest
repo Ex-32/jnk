@@ -1,5 +1,4 @@
+WHITESPACE = _{ " " | "\t" | NEWLINE }
 COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
-
 Main = { SOI ~ Line* ~ EOI }
-
-Line = @{ (!NEWLINE ~ ANY ~ ("\\" ~ NEWLINE)?)+ }
+Line = ${ (!NEWLINE ~ ANY ~ ( "\\" ~ NEWLINE )?)+ ~ NEWLINE }

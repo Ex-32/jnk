@@ -1,7 +1,7 @@
 
-WHITESPACE = _{ " " | "\t" }
+WHITESPACE = _{ " " | "\t" | "\\" | NEWLINE}
 
-Variable = @{ ASCII_ALPHA ~ ( "_" | ASCII_ALPHANUMERIC )* }
+Variable = @{ "_" | (ASCII_ALPHA ~ ( "_" | ASCII_ALPHANUMERIC )*) }
 
 Lhs = { Variable }
 
@@ -9,10 +9,12 @@ Operator = { "+" | "-" | "*" | "/" | "^"  }
 
 Parenthetical = { "(" ~ Expression ~ ")" }
 
-Literal  = @{ "-"? ~ ASCII_DIGIT+ }
+Negation = { "-" ~ Expression }
+
+Literal  = @{ ASCII_DIGIT+ }
 
 Value = { Variable | Literal | Parenthetical }
 
-Expression = { Value ~ (Operator ~ Value)* }
+Expression = { Negation | (Value ~ (Operator ~ Value)*) }
 
 Main = { SOI ~ ( Lhs ~ "=" )? ~ Expression ~ EOI }
