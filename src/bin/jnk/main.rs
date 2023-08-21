@@ -17,14 +17,13 @@ const CRATE: &str = env!("CARGO_CRATE_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const AUTHROS: &str = env!("CARGO_PKG_AUTHORS");
 
-static ARGS: Lazy<Args> = Lazy::new(|| Args::parse());
+static ARGS: Lazy<Args> = Lazy::new(Args::parse);
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-   
     /// disable prompt prompt characters
-    #[arg(short, long)]  
+    #[arg(short, long)]
     quiet: bool,
 
     /// path to script to evaluate (`-' for stdin)

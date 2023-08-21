@@ -27,7 +27,7 @@ pub(crate) fn run(ctx: &mut jnk::context::MathContext) -> Result<()> {
                         println!("-> {}", x.value.bold())
                     }
                 }
-            },
+            }
             Err(e) => match e {
                 jnk::error::Error::VarNotFound(var) => println!(
                     "{} {} '{}'",
@@ -57,4 +57,3 @@ pub(crate) fn run(ctx: &mut jnk::context::MathContext) -> Result<()> {
         }
     }
 }
-
