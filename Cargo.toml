@@ -1,6 +1,6 @@
 [package]
 name = "jnk"
-version = "0.1.0"
+version = "0.2.0"
 description = "Jenna's Number Kruncher: a library for parsing math expressions."
 authors = ["Jenna Fligor"]
 license = "MIT"
