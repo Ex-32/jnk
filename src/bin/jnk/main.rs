@@ -15,7 +15,7 @@ mod scripts;
 
 const CRATE: &str = env!("CARGO_CRATE_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-const AUTHROS: &str = env!("CARGO_PKG_AUTHORS");
+const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
 static ARGS: Lazy<Args> = Lazy::new(Args::parse);
 
@@ -42,7 +42,7 @@ fn main() -> Result<()> {
                 CRATE.bold(),
                 "v".bold(),
                 VERSION.bold(),
-                AUTHROS,
+                AUTHORS,
                 "(press ctrl-d to exit)".if_supports_color(Stdout, |x| x.dimmed()),
             );
         }

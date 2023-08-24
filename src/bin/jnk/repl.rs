@@ -15,7 +15,7 @@ pub(crate) fn run(ctx: &mut jnk::context::MathContext) -> Result<()> {
             Err(e) => match e {
                 ReadlineError::Eof => break Ok(()),
                 ReadlineError::Interrupted => continue,
-                _ => return Err(eyre!(e).wrap_err("unexpcted error reading user input")),
+                _ => return Err(eyre!(e).wrap_err("unexpected error reading user input")),
             },
         };
         match ctx.eval(&input) {
