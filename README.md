@@ -38,7 +38,7 @@ library
 cargo add jnk
 ```
 
-## feaures
+## features
 
 - arbitrary precision integers
 - variables
