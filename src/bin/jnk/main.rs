@@ -2,7 +2,7 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 
-use std::path::PathBuf;
+use std::{io::Read, path::PathBuf};
 
 use clap::Parser;
 use color_eyre::eyre::Result;
@@ -34,7 +34,13 @@ fn main() -> Result<()> {
     color_eyre::install()?;
 
     if let Some(path) = &ARGS.file {
-        scripts::MathScript::from_file(path)?.eval()?;
+        if *path == PathBuf::from("-") {
+            let mut buf = String::new();
+            std::io::stdin().lock().read_to_string(&mut buf)?;
+            scripts::MathScript::from_str(buf)?.eval()?;
+        } else {
+            scripts::MathScript::from_file(path)?.eval()?;
+        }
     } else {
         if !ARGS.quiet {
             println!(
