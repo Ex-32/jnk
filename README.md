@@ -40,7 +40,7 @@ cargo add jnk
 
 ## features
 
-- arbitrary precision integers
+- arbitrary size integers
 - variables
 - cli repl
 - cli script support
