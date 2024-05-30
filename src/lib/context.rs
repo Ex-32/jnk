@@ -25,6 +25,14 @@ use rug::ops::Pow;
 ///     *context.var_get("myVar").unwrap(),
 ///     jnk::Integer::from(42)
 /// );
+/// assert_eq!(
+///     context.eval("myVar / 2").unwrap().value,
+///     jnk::Integer::from(21)
+/// );/
+/// assert_eq!(
+///     context.eval("2 ^ 32 - 1").unwrap().value,
+///     jnk::Integer::from(u32::MAX)
+/// );
 /// ```
 ///
 #[derive(Debug, Clone, Default)]
@@ -60,7 +68,7 @@ impl MathContext {
     /// [`Error::NotValidVar`] if the variable name is invalid; variable names
     /// must be ascii alphanumeric, and begin with a letter OR be the special
     /// variable "`_`" which always refers to the last returned value (so values
-    /// assigned to it are effectivly disregarded).
+    /// assigned to it are effectively disregarded).
     pub fn var_set(&mut self, name: String, value: Integer) -> Result<(), Error> {
         if Self::var_valid(&name) {
             self.var_tab.insert(name, value);
@@ -219,7 +227,7 @@ impl MathContext {
                 }
 
                 // as mentioned above i couldn't get a normal iterator loop to
-                // work properly with the borrow checker, so i'm just telling
+                // work properly with the borrow checker, so I'm just telling
                 // clippy to stfu
                 #[allow(clippy::needless_range_loop)]
                 for i in 0..line.len() {
